@@ -1,0 +1,6 @@
+# Claude Code - session-specific files
+.claude/plans/
+.claude/memory/
+
+# IDE-specific settings
+.cursor/
