@@ -72,6 +72,7 @@ export default function IncomeEntriesPage() {
       </Card>
 
       <IncomeEntryForm
+        key={editingEntry?.id ?? "add"}
         entry={editingEntry}
         sources={sources}
         open={formOpen}

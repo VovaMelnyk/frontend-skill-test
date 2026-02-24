@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
@@ -67,6 +68,9 @@ export function IncomeSourceForm({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{source ? "Edit Source" : "Add Source"}</DialogTitle>
+          <DialogDescription>
+            {source ? "Update the income source details below." : "Fill in the details to add a new income source."}
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
@@ -121,6 +125,7 @@ export function IncomeSourceForm({
                           <button
                             key={c}
                             type="button"
+                            aria-label={`Select color ${c}`}
                             className="h-6 w-6 rounded-full border-2 border-transparent hover:border-foreground"
                             style={{ backgroundColor: c }}
                             onClick={() => field.onChange(c)}

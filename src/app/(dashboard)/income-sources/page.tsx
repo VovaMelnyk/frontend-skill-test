@@ -62,6 +62,7 @@ export default function IncomeSourcesPage() {
       </Card>
 
       <IncomeSourceForm
+        key={editingSource?.id ?? "add"}
         source={editingSource}
         open={formOpen}
         onOpenChange={setFormOpen}

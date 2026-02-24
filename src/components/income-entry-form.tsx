@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
@@ -46,7 +47,7 @@ export function IncomeEntryForm({
 }: IncomeEntryFormProps) {
   const activeSources = sources.filter((s) => s.isActive)
 
-  const form = useForm({
+  const form = useForm<IncomeEntryFormData>({
     resolver: zodResolver(incomeEntrySchema),
     defaultValues: {
       sourceId: entry?.sourceId ?? "",
@@ -70,6 +71,9 @@ export function IncomeEntryForm({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{entry ? "Edit Entry" : "Add Entry"}</DialogTitle>
+          <DialogDescription>
+            {entry ? "Update the income entry details below." : "Fill in the details to add a new income entry."}
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
@@ -110,7 +114,14 @@ export function IncomeEntryForm({
                 <FormItem>
                   <FormLabel>Amount (UAH)</FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.01" min="0" placeholder="0.00" {...field} />
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      placeholder="0.00"
+                      {...field}
+                      onChange={(e) => field.onChange(e.target.valueAsNumber || 0)}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
