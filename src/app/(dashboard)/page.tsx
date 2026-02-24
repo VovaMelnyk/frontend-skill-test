@@ -8,7 +8,6 @@ import { IncomeAreaChart } from "@/components/income-area-chart"
 import { IncomeDonutChart } from "@/components/income-donut-chart"
 import {
   useIncomeSources,
-  useIncomeEntries,
   useDashboardData,
 } from "@/hooks/use-income-data"
 import { FAMILY_MEMBERS } from "@/lib/mock-data"
@@ -20,8 +19,7 @@ export default function DashboardPage() {
   const [ownerId, setOwnerId] = useState<string | undefined>(undefined)
 
   const { sources } = useIncomeSources()
-  const { entries } = useIncomeEntries()
-  const dashboardData = useDashboardData(sources, entries, period, ownerId)
+  const { data: dashboardData, isLoading } = useDashboardData(period, ownerId)
 
   const filteredSources = ownerId
     ? sources.filter((s) => s.ownerId === ownerId)
@@ -50,16 +48,24 @@ export default function DashboardPage() {
         </Tabs>
       </div>
 
-      <KpiCards data={dashboardData} sources={sources} />
+      {dashboardData && !isLoading ? (
+        <>
+          <KpiCards data={dashboardData} sources={sources} />
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <IncomeAreaChart months={dashboardData.months} sources={filteredSources} />
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <IncomeAreaChart months={dashboardData.months} sources={filteredSources} />
+            </div>
+            <div>
+              <IncomeDonutChart months={dashboardData.months} sources={filteredSources} />
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="flex h-64 items-center justify-center text-muted-foreground">
+          Loading dashboard data...
         </div>
-        <div>
-          <IncomeDonutChart months={dashboardData.months} sources={filteredSources} />
-        </div>
-      </div>
+      )}
     </div>
   )
 }

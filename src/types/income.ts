@@ -36,7 +36,7 @@ export type MonthlyAggregation = {
 }
 
 export type DashboardData = {
-  period: PeriodFilter
+  period: { startMonth: string; endMonth: string }
   months: MonthlyAggregation[]
   totalIncome: number
   activeSourcesCount: number
