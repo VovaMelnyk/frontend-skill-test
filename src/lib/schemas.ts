@@ -10,9 +10,9 @@ export type IncomeSourceFormData = z.infer<typeof incomeSourceSchema>
 
 export const incomeEntrySchema = z.object({
   sourceId: z.string().min(1, "Source is required"),
-  amount: z.coerce.number().positive("Amount must be positive"),
+  amount: z.number().positive("Amount must be positive"),
   month: z.string().regex(/^\d{4}-\d{2}$/, "Invalid month format"),
-  note: z.string().optional().default(""),
+  note: z.string().default(""),
 })
 
 export type IncomeEntryFormData = z.infer<typeof incomeEntrySchema>
