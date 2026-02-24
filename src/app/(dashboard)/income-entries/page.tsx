@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState } from "react"
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -14,18 +14,10 @@ import type { IncomeEntryFormData } from "@/lib/schemas"
 
 export default function IncomeEntriesPage() {
   const { sources } = useIncomeSources()
-  const { entries, addEntry, updateEntry, deleteEntry } = useIncomeEntries()
   const [period, setPeriod] = useState<PeriodFilter>(getDefaultPeriodFilter)
+  const { entries, addEntry, updateEntry, deleteEntry } = useIncomeEntries(period)
   const [formOpen, setFormOpen] = useState(false)
   const [editingEntry, setEditingEntry] = useState<IncomeEntry | undefined>()
-
-  const filteredEntries = useMemo(
-    () =>
-      entries.filter(
-        (e) => e.month >= period.startMonth && e.month <= period.endMonth
-      ),
-    [entries, period]
-  )
 
   const handleAdd = () => {
     setEditingEntry(undefined)
@@ -63,7 +55,7 @@ export default function IncomeEntriesPage() {
         </CardHeader>
         <CardContent>
           <IncomeEntriesTable
-            entries={filteredEntries}
+            entries={entries}
             sources={sources}
             onEdit={handleEdit}
             onDelete={deleteEntry}

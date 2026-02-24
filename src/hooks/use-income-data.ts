@@ -1,146 +1,114 @@
 "use client"
 
-import { useState, useMemo, useCallback } from "react"
-import type {
-  IncomeSource,
-  IncomeEntry,
-  PeriodFilter,
-  MonthlyAggregation,
-  DashboardData,
-} from "@/types/income"
-import { INITIAL_SOURCES, INITIAL_ENTRIES } from "@/lib/mock-data"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import * as api from "@/lib/api"
+import type { IncomeSource, IncomeEntry, PeriodFilter, DashboardData } from "@/types/income"
+
+// ─── Income Sources ───
 
 export function useIncomeSources() {
-  const [sources, setSources] = useState<IncomeSource[]>(INITIAL_SOURCES)
+  const queryClient = useQueryClient()
 
-  const addSource = useCallback((data: { name: string; ownerId: string; color: string }) => {
-    const now = new Date().toISOString()
-    const newSource: IncomeSource = {
-      id: `src-${crypto.randomUUID()}`,
-      ...data,
-      isActive: true,
-      createdAt: now,
-      updatedAt: now,
-    }
-    setSources((prev) => [...prev, newSource])
-  }, [])
+  const { data: sources = [], isLoading } = useQuery<IncomeSource[]>({
+    queryKey: ["income-sources"],
+    queryFn: api.fetchSources,
+  })
 
-  const updateSource = useCallback((id: string, data: Partial<IncomeSource>) => {
-    setSources((prev) =>
-      prev.map((s) =>
-        s.id === id ? { ...s, ...data, updatedAt: new Date().toISOString() } : s
-      )
-    )
-  }, [])
+  const addMutation = useMutation({
+    mutationFn: (data: { name: string; ownerId: string; color: string }) =>
+      api.createSource(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["income-sources"] })
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] })
+    },
+  })
 
-  const deleteSource = useCallback((id: string) => {
-    setSources((prev) => prev.filter((s) => s.id !== id))
-  }, [])
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<IncomeSource> }) =>
+      api.updateSource(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["income-sources"] })
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] })
+    },
+  })
 
-  return { sources, addSource, updateSource, deleteSource }
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => api.deleteSource(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["income-sources"] })
+      queryClient.invalidateQueries({ queryKey: ["income-entries"] })
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] })
+    },
+  })
+
+  return {
+    sources,
+    isLoading,
+    addSource: (data: { name: string; ownerId: string; color: string }) =>
+      addMutation.mutate(data),
+    updateSource: (id: string, data: Partial<IncomeSource>) =>
+      updateMutation.mutate({ id, data }),
+    deleteSource: (id: string) => deleteMutation.mutate(id),
+  }
 }
 
-export function useIncomeEntries() {
-  const [entries, setEntries] = useState<IncomeEntry[]>(INITIAL_ENTRIES)
+// ─── Income Entries ───
 
-  const addEntry = useCallback((data: { sourceId: string; amount: number; month: string; note?: string }) => {
-    const now = new Date().toISOString()
-    const newEntry: IncomeEntry = {
-      id: `entry-${crypto.randomUUID()}`,
-      sourceId: data.sourceId,
-      amount: data.amount,
-      month: data.month,
-      note: data.note ?? "",
-      createdAt: now,
-      updatedAt: now,
-    }
-    setEntries((prev) => [...prev, newEntry])
-  }, [])
+export function useIncomeEntries(period: PeriodFilter) {
+  const queryClient = useQueryClient()
 
-  const updateEntry = useCallback((id: string, data: Partial<IncomeEntry>) => {
-    setEntries((prev) =>
-      prev.map((e) =>
-        e.id === id ? { ...e, ...data, updatedAt: new Date().toISOString() } : e
-      )
-    )
-  }, [])
+  const { data: entries = [], isLoading } = useQuery<IncomeEntry[]>({
+    queryKey: ["income-entries", period.startMonth, period.endMonth],
+    queryFn: () => api.fetchEntries(period.startMonth, period.endMonth),
+  })
 
-  const deleteEntry = useCallback((id: string) => {
-    setEntries((prev) => prev.filter((e) => e.id !== id))
-  }, [])
+  const addMutation = useMutation({
+    mutationFn: (data: { sourceId: string; amount: number; month: string; note?: string }) =>
+      api.createEntry(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["income-entries"] })
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] })
+    },
+  })
 
-  return { entries, addEntry, updateEntry, deleteEntry }
+  const updateMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Record<string, unknown> }) =>
+      api.updateEntry(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["income-entries"] })
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] })
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => api.deleteEntry(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["income-entries"] })
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] })
+    },
+  })
+
+  return {
+    entries,
+    isLoading,
+    addEntry: (data: { sourceId: string; amount: number; month: string; note?: string }) =>
+      addMutation.mutate(data),
+    updateEntry: (id: string, data: Record<string, unknown>) =>
+      updateMutation.mutate({ id, data }),
+    deleteEntry: (id: string) => deleteMutation.mutate(id),
+  }
 }
+
+// ─── Dashboard ───
 
 export function useDashboardData(
-  sources: IncomeSource[],
-  entries: IncomeEntry[],
   period: PeriodFilter,
   ownerId?: string
-): DashboardData {
-  return useMemo(() => {
-    const filteredSources = ownerId
-      ? sources.filter((s) => s.ownerId === ownerId)
-      : sources
+): { data: DashboardData | undefined; isLoading: boolean } {
+  const { data, isLoading } = useQuery<DashboardData>({
+    queryKey: ["dashboard", period.startMonth, period.endMonth, ownerId],
+    queryFn: () => api.fetchDashboard(period.startMonth, period.endMonth, ownerId),
+  })
 
-    const sourceIds = new Set(filteredSources.map((s) => s.id))
-
-    const filteredEntries = entries.filter(
-      (e) =>
-        sourceIds.has(e.sourceId) &&
-        e.month >= period.startMonth &&
-        e.month <= period.endMonth
-    )
-
-    const monthsMap = new Map<string, MonthlyAggregation>()
-
-    for (const entry of filteredEntries) {
-      const existing = monthsMap.get(entry.month) ?? {
-        month: entry.month,
-        total: 0,
-        sources: {},
-      }
-      existing.total += entry.amount
-      existing.sources[entry.sourceId] =
-        (existing.sources[entry.sourceId] ?? 0) + entry.amount
-      monthsMap.set(entry.month, existing)
-    }
-
-    const months = Array.from(monthsMap.values()).sort((a, b) =>
-      a.month.localeCompare(b.month)
-    )
-
-    const totalIncome = months.reduce((sum, m) => sum + m.total, 0)
-
-    const activeSourcesCount = filteredSources.filter((s) => s.isActive).length
-
-    const sourceTotals = new Map<string, number>()
-    for (const entry of filteredEntries) {
-      sourceTotals.set(
-        entry.sourceId,
-        (sourceTotals.get(entry.sourceId) ?? 0) + entry.amount
-      )
-    }
-
-    let topSourceId = ""
-    let topSourceAmount = 0
-    for (const [id, amount] of sourceTotals) {
-      if (amount > topSourceAmount) {
-        topSourceId = id
-        topSourceAmount = amount
-      }
-    }
-
-    const topSourcePercentage =
-      totalIncome > 0 ? Math.round((topSourceAmount / totalIncome) * 100) : 0
-
-    return {
-      period,
-      months,
-      totalIncome,
-      activeSourcesCount,
-      topSourceId,
-      topSourcePercentage,
-    }
-  }, [sources, entries, period, ownerId])
+  return { data, isLoading }
 }
