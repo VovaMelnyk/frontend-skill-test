@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "skills": {
+    "javascript-testing-patterns": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "computedHash": "34219092e71607f9257720b3b43ecd37c8af0d3dbf695e3263f4c68ab0b019e2"
+    },
+    "modern-javascript-patterns": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "computedHash": "70bc273dcb90ed035be512862b658d1bd80daa135e24d346c7111f1830f934c5"
+    },
+    "typescript-advanced-types": {
+      "source": "wshobson/agents",
+      "sourceType": "github",
+      "computedHash": "a03a83996ae9d2f4dd6d4db08899d61761c7d5351bce4c695d20a21197742a36"
+    }
+  }
+}
